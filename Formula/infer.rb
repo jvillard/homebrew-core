@@ -3,8 +3,8 @@ class Infer < Formula
   homepage "https://fbinfer.com/"
   # pull from git tag to get submodules
   url "https://github.com/facebook/infer.git",
-      :tag      => "v0.15.0",
-      :revision => "8bda23fadcc51c6ed38a4c3a75be25a266e8f7b4"
+      :tag      => "v0.16.0",
+      :revision => "4a91616390c058382c703f47653adfaecd31a7d7"
 
   bottle do
     cellar :any
@@ -15,9 +15,12 @@ class Infer < Formula
 
   depends_on "autoconf" => :build
   depends_on "automake" => :build
+  depends_on "camlp4" => :build
   depends_on "cmake" => :build
+  depends_on "gmp"
   depends_on :java => ["1.7+", :build]
   depends_on "libtool" => :build
+  depends_on "mpfr"
   depends_on "ocaml" => :build
   depends_on "opam" => :build
   depends_on "pkg-config" => :build
@@ -46,16 +49,14 @@ class Infer < Formula
       -DLLVM_BUILD_LLVM_DYLIB=ON
     ]
 
-    system "opam", "init", "--no-setup"
-    ocaml_version = File.read("build-infer.sh").match(/OCAML_VERSION_DEFAULT=\"([^\"]+)\"/)[1]
-    ocaml_version_number = ocaml_version.split("+", 2)[0]
-    inreplace "#{opamroot}/compilers/#{ocaml_version_number}/#{ocaml_version}/#{ocaml_version}.comp",
-      '["./configure"', '["./configure" "-no-graph"'
+    # disable opam sandboxing because Homebrew is sandboxed already
+    system "opam", "init", "--no-setup", "--disable-sandboxing"
+
     # so that `infer --version` reports a release version number
-    inreplace "infer/src/base/Version.ml.in", "let is_release = is_yes \"@IS_RELEASE_TREE@\"", "let is_release = true"
+    inreplace "infer/src/base/Version.ml.in", "@IS_RELEASE_TREE@", "yes"
     inreplace "facebook-clang-plugins/clang/setup.sh", "CMAKE_ARGS=(", "CMAKE_ARGS=(\n  " + llvm_args.join("\n  ")
-    system "./build-infer.sh", "all", "--yes"
-    system "opam", "config", "exec", "--switch=infer-#{ocaml_version}", "--", "make", "install"
+    system "opam", "config", "exec", "--", "./build-infer.sh", "all", "--yes", "--user-opam-switch", "--no-opam-lock"
+    system "opam", "config", "exec", "--", "make", "install"
   end
 
   test do
