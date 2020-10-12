@@ -1,12 +1,10 @@
 class Infer < Formula
   desc "Static analyzer for Java, C, C++, and Objective-C"
   homepage "https://fbinfer.com/"
-  # pull from git tag to get submodules
-  url "https://github.com/facebook/infer.git",
-      tag:      "v0.17.0",
-      revision: "99464c01da5809e7159ed1a75ef10f60d34506a4"
+  url "https://github.com/facebook/infer/archive/v1.0.0.tar.gz"
+  sha256 "10edee4a37f985afca120337130f92fec67c8651425571987ca2645b937c6395"
   license "MIT"
-  revision 1
+  head "https://github.com/facebook/infer.git"
 
   livecheck do
     url :stable
@@ -34,7 +32,6 @@ class Infer < Formula
   depends_on "openjdk@8" => [:build, :test]
   depends_on "pkg-config" => :build
   depends_on "gmp"
-  depends_on :macos # Due to Python 2 (https://github.com/facebook/infer/issues/934)
   depends_on "mpfr"
   depends_on "sqlite"
 
@@ -43,13 +40,6 @@ class Infer < Formula
   uses_from_macos "ncurses"
   uses_from_macos "xz"
   uses_from_macos "zlib"
-
-  # Remove camlp4 dependency, which is deprecated
-  # Addressed in 0.18.x
-  patch do
-    url "https://github.com/facebook/infer/commit/f52b5fc981c692776210d7eb9681c2b8c3117c93.patch?full_index=1"
-    sha256 "5487b9b39607c94821bede8d4f0ec2a0ed08d5213d5f048b1344819dac53b2f5"
-  end
 
   def install
     # needed to build clang
@@ -77,16 +67,6 @@ class Infer < Formula
     # Release build
     touch ".release"
 
-    # Pin updated dependencies which are required to build on brew ocaml
-    # Remove from this when Infer updates their opam.locked to use at least these versions
-    pinned_deps = {
-      "mlgmpidl"  => "1.2.12",
-      "octavius"  => "1.2.1",
-      "parmap"    => "1.0-rc11",
-      "ppx_tools" => "5.3+4.08.0",
-    }
-    pinned_deps.each { |dep, ver| system "opam", "pin", "add", dep, ver, "--locked" }
-
     # Unfortunately, opam can't cope if a system ocaml-num happens to be installed.
     # Instead, we depend on Homebrew's ocaml-num and fool opam into using it.
     # https://github.com/ocaml/opam-repository/issues/14646
@@ -94,8 +74,7 @@ class Infer < Formula
     system "opam", "pin", "add", "num", Formula["ocaml-num"].version.to_s, "--locked", "--fake"
 
     # Relax the dependency lock on a specific ocaml
-    # Also ignore anything we pinned above
-    ENV["OPAMIGNORECONSTRAINTS"] = "ocaml,ocamlfind,num,#{pinned_deps.keys.join(",")}"
+    ENV["OPAMIGNORECONSTRAINTS"] = "ocaml,ocamlfind,num"
 
     # Remove ocaml-variants dependency (we won't be using it)
     inreplace "opam.locked", /^ +"ocaml-variants" \{= ".*?"\}$\n/, ""
