@@ -25,9 +25,11 @@ class Infer < Formula
   depends_on "automake" => :build
   depends_on "cmake" => :build
   depends_on "libtool" => :build
+  depends_on "ninja" => :build
   depends_on "opam" => :build
   depends_on "openjdk@8" => [:build, :test]
   depends_on "pkg-config" => :build
+  depends_on "python" => :build
   depends_on "gmp"
   depends_on "mpfr"
   depends_on "sqlite"
