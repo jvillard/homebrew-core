@@ -25,9 +25,6 @@ class Infer < Formula
   depends_on "automake" => :build
   depends_on "cmake" => :build
   depends_on "libtool" => :build
-  depends_on "ocaml" => :build
-  depends_on "ocaml-findlib" => :build
-  depends_on "ocaml-num" => :build
   depends_on "opam" => :build
   depends_on "openjdk@8" => [:build, :test]
   depends_on "pkg-config" => :build
@@ -62,25 +59,11 @@ class Infer < Formula
     # Let's try build clang faster
     ENV["JOBS"] = ENV.make_jobs.to_s
 
-    ENV["CLANG_CMAKE_ARGS"] = "-DLLVM_OCAML_INSTALL_PATH=#{`opam var lib`.chomp}/ocaml"
-
     # Release build
     touch ".release"
 
-    # Unfortunately, opam can't cope if a system ocaml-num happens to be installed.
-    # Instead, we depend on Homebrew's ocaml-num and fool opam into using it.
-    # https://github.com/ocaml/opam-repository/issues/14646
-    system "opam", "pin", "add", "ocamlfind", Formula["ocaml-findlib"].version.to_s, "--locked", "--fake"
-    system "opam", "pin", "add", "num", Formula["ocaml-num"].version.to_s, "--locked", "--fake"
-
-    # Relax the dependency lock on a specific ocaml
-    ENV["OPAMIGNORECONSTRAINTS"] = "ocaml,ocamlfind,num"
-
-    # Remove ocaml-variants dependency (we won't be using it)
-    inreplace "opam.locked", /^ +"ocaml-variants" \{= ".*?"\}$\n/, ""
-
-    system "opam", "exec", "--", "./build-infer.sh", "all", "--yes", "--user-opam-switch"
-    system "opam", "exec", "--", "make", "install-with-libs"
+    system "./build-infer.sh", "all", "--yes"
+    system "make", "install-with-libs"
   end
 
   test do
