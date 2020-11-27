@@ -29,7 +29,7 @@ class Infer < Formula
   depends_on "opam" => :build
   depends_on "openjdk@8" => [:build, :test]
   depends_on "pkg-config" => :build
-  depends_on "python" => :build
+  depends_on "python@3.9" => :build
   depends_on "gmp"
   depends_on "mpfr"
   depends_on "sqlite"
